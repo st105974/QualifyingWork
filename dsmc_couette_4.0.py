@@ -205,9 +205,6 @@ def sample_snapshot(y, vx, vy, dy, n_cells):
 
     return sum_vx, sum_vy, sum_v2, count
 
-# ============================
-#  Driver
-# ============================
 
 def run_dsmc(
     N_PART, N_CELLS, H, TWALL, U1, U2, PRESSURE,
@@ -273,7 +270,7 @@ def run_dsmc(
         if (it + 1) % SAVE_EVERY == 0:
             svx, svy, sv2, cnt = sample_snapshot(y, vx, vy, dy, N_CELLS)
 
-            with np.errstate(divide='ignore', invalid='ignore'): # строим массивы с локальными средними
+            with np.errstate(divide='ignore', invalid='ignore'): # массивы с локальными средними
                 ux = np.where(cnt > 0, svx / cnt, 0.0)
                 uy = np.where(cnt > 0, svy / cnt, 0.0)
                 E2 = np.where(cnt > 0, sv2 / cnt, 0.0)
@@ -304,7 +301,7 @@ def run_dsmc(
             cum_v2 += sv2
             cum_cnt += cnt
 
-            # временные ряды: центр и доменное среднее
+            # временные ряды: центр и интегральное среднее
             c_mid = N_CELLS // 2
             u_center_ts[s] = ux[c_mid] if cnt[c_mid] > 0 else 0.0
             T_center_ts[s] = Tcur[c_mid] if cnt[c_mid] > 0 else 0.0
@@ -352,7 +349,7 @@ def plot_profiles(yc, u_mean, T_mean, U1, U2, H, Twall, m, lam, dt):
               title=f'Velocity (Kn≈{lam/H:.3f}, dt={dt:.2e}s)')
     ax[0].grid(True); ax[0].legend()
 
-    # температура (ориентир — классика вязкостного нагрева)
+    # температура (вязкостный нагрев)
     mu_over_k = 4.0 * m / (15.0 * KB)
     A = 0.5 * mu_over_k * ((U2 - U1) / H) ** 2
     T_an = Twall + A * yc * (H - yc)
@@ -435,11 +432,8 @@ def cli():
         threads=threads, tol=args.tol, conv_window=args.conv_window
     )
 
-    # 1) усреднённые профили без «зелёных точек»
     plot_profiles(yc, u_mean, T_mean, args.u1, args.u2, args.H, args.twall, args.mass, lam, dt)
-    # 2) сходимость
     plot_convergence(times, res_u, res_T, Tglob, args.tol)
-    # 3) скорость/температура во времени
     plot_time_series(times, u_center_ts, u_avg_ts, T_center_ts, Tglob)
 
 if __name__ == "__main__":
