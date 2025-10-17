@@ -1,4 +1,3 @@
-# dsmc_couette_parallel_convergence.py
 from __future__ import annotations
 import argparse, math, time as _time
 import numpy as np
